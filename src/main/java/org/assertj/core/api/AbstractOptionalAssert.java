@@ -12,6 +12,7 @@
  */
 package org.assertj.core.api;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.error.OptionalShouldBeEmpty.shouldBeEmpty;
 import static org.assertj.core.error.OptionalShouldBePresent.shouldBePresent;
@@ -170,6 +171,31 @@ public abstract class AbstractOptionalAssert<SELF extends AbstractOptionalAssert
   public SELF hasValueSatisfying(Consumer<VALUE> requirement) {
     assertValueIsPresent();
     requirement.accept(actual.get());
+    return myself;
+  }
+
+  /**
+   * Verifies that the actual {@link java.util.Optional} contains a value and that this value returns the given expected value from the given {@link Function},
+   * a typical usage is to pass a method reference to assert object's property.
+   * <p>
+   * Wrapping the given {@link Function} with {@link Assertions#from(Function)} makes the assertion more readable.
+   * <p>
+   * Example:
+   * <pre><code class="java"> // from is not mandatory but it makes the assertions more readable
+   * assertThat(Optional.of(frodo)).returns("Frodo", from(TolkienCharacter::getName))
+   *                  .returns("Frodo", TolkienCharacter::getName) // no from :(
+   *                  .returns(HOBBIT, from(TolkienCharacter::getRace));</code></pre>
+   *
+   * @param expected the value the object under test method's call should return.
+   * @param from {@link Function} used to acquire the value to test from the object under test. Must not be {@code null}
+   * @param <T> the expected value type the given {@code method} returns.
+   * @return {@code this} assertion object.
+   * @throws NullPointerException if given {@code from} function is null
+   */
+  public <T> SELF returns(T expected, Function<VALUE, T> from) {
+    assertValueIsPresent();
+    requireNonNull(from, "The given getter method/Function must not be null");
+    objects.assertEqual(info, from.apply(actual.get()), expected);
     return myself;
   }
 
